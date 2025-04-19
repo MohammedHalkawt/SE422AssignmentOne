@@ -1,134 +1,14 @@
 package Bonus;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/*
- * Names: Your Name 1, Your Name 2
- * Emails: your_email1@example.com, your_email2@example.com
- */
-
-class Counter {
-    private int count = 0;
-    private final PDFFileCounter coordinator;
-
-    public Counter(PDFFileCounter coordinator) {
-        this.coordinator = coordinator;
-    }
-
-    public void increment(String threadName, String counterType) {
-        synchronized (this) {
-            count++;
-        }
-        String updateMessage = counterType + " count: " + count + (threadName != null ? " (" + threadName + ")" : "");
-        coordinator.addUpdate(updateMessage);
-    }
-
-    public synchronized int getCount() {
-        return count;
-    }
-
-    public void sendFinalCount(String counterType) {
-        coordinator.addUpdate("Final " + counterType + " count: " + getCount());
-    }
-}
-
-class DirectoryScanner {
-    public static List<File> getAllFiles(File directory) {
-        List<File> fileList = new ArrayList<>();
-        scanDirectory(directory, fileList);
-        return fileList;
-    }
-
-    private static void scanDirectory(File directory, List<File> fileList) {
-        File[] files = directory.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    scanDirectory(file, fileList);
-                } else {
-                    fileList.add(file);
-                }
-            }
-        }
-    }
-}
-
-class ResultPrinter implements Runnable {
-    private final PDFFileCounter coordinator;
-    private final Counter singleThreadCount;
-    private final Counter fourThreadsCount;
-    private final Counter threadPoolCount;
-
-    public ResultPrinter(PDFFileCounter coordinator, Counter single, Counter four, Counter pool) {
-        this.coordinator = coordinator;
-        this.singleThreadCount = single;
-        this.fourThreadsCount = four;
-        this.threadPoolCount = pool;
-    }
-
-    @Override
-    public void run() {
-        System.out.println("--- Live Counting Updates ---");
-        try {
-
-            System.out.println(coordinator.getNextUpdate());
-            String message;
-            while (!(message = coordinator.getNextUpdate()).startsWith("Final single thread count")) {
-                System.out.println(message);
-            }
-            System.out.println(message);
-            System.out.println();
-
-
-            System.out.println(coordinator.getNextUpdate());
-            System.out.println("\n--- Four-Threaded Counting ---");
-            while (!(message = coordinator.getNextUpdate()).startsWith("Final four threads count")) {
-                System.out.println(message);
-            }
-            System.out.println(message);
-            System.out.println();
-
-        
-            System.out.println(coordinator.getNextUpdate());
-            System.out.println("\n--- Thread Pool Counting ---");
-            while (!(message = coordinator.getNextUpdate()).startsWith("Final thread pool count")) {
-                System.out.println(message);
-            }
-            System.out.println(message);
-            System.out.println();
-
-            System.out.println(coordinator.getNextUpdate());
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        System.out.println("\n--- Final Results from Printer Thread ---");
-        System.out.println("Single thread count: " + singleThreadCount.getCount());
-        System.out.println("Four threads count: " + fourThreadsCount.getCount());
-        System.out.println("Thread pool count: " + threadPoolCount.getCount());
-    }
-}
 
 public class PDFFileCounter {
     private final List<String> updateMessages = new LinkedList<>();
-
-    public synchronized void addUpdate(String message) {
-        updateMessages.add(message);
-        notifyAll();
-    }
-
-    public synchronized String getNextUpdate() throws InterruptedException {
-        while (updateMessages.isEmpty()) {
-            wait();
-        }
-        return updateMessages.remove(0);
-    }
-
     public static void main(String[] args) throws InterruptedException {
         PDFFileCounter coordinator = new PDFFileCounter();
 
@@ -223,5 +103,17 @@ public class PDFFileCounter {
         }
 
         scanner.close();
+    }
+
+    public synchronized void addUpdate(String message) {
+        updateMessages.add(message);
+        notifyAll();
+    }
+
+    public synchronized String getNextUpdate() throws InterruptedException {
+        while (updateMessages.isEmpty()) {
+            wait();
+        }
+        return updateMessages.remove(0);
     }
 }
