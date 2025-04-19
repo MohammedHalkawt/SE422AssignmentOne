@@ -4,5 +4,5 @@ References:
         - How to scan a directory for pdf files and count them in java
         - Thread terminarion in java for ExecutorService
         - How to equally divide workload between 4 threats in newFixedThreadPool
-        - 
+        
     https://docs.oracle.com/javase/8/docs/api/java/io/File.html
