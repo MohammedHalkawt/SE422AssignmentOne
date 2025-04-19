@@ -6,11 +6,15 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/*
+    Names: Mohammed Halkawt Ali, Kamiran Sulaiman Ilyas
+    Emails: mh21096@auis.edu.krd, ks20096@auis.edu.krd
+ */
 
 public class PDFFileCounter {
     private final List<String> updateMessages = new LinkedList<>();
     public static void main(String[] args) throws InterruptedException {
-        PDFFileCounter coordinator = new PDFFileCounter();
+        PDFFileCounter countHolder = new PDFFileCounter();
 
         System.out.println("Enter the path to an existing directory:");
         Scanner scanner = new Scanner(System.in);
@@ -25,18 +29,20 @@ public class PDFFileCounter {
 
         List<File> allFiles = DirectoryScanner.getAllFiles(directory);
         System.out.println("Total files found: " + allFiles.size());
+        //Note: Here we scanned all files in the beginning and added them to this List to increase efficiency,
+            //  since if the threads themselves were to scan the directory everytime they wanted to count, it would be very inefficient.
 
-        Counter singleThreadCount = new Counter(coordinator);
-        Counter fourThreadsCount = new Counter(coordinator);
-        Counter threadPoolCount = new Counter(coordinator);
+        Counter singleThreadCount = new Counter(countHolder);
+        Counter fourThreadsCount = new Counter(countHolder);
+        Counter threadPoolCount = new Counter(countHolder);
 
         System.out.println("\nLaunching result printer thread...");
         Thread resultPrinterThread = new Thread(new ResultPrinter(
-                coordinator, singleThreadCount, fourThreadsCount, threadPoolCount));
+                countHolder, singleThreadCount, fourThreadsCount, threadPoolCount));
         resultPrinterThread.start();
 
         System.out.println("\nCounting with single thread...");
-        coordinator.addUpdate("--- Single-Threaded Counting ---");
+        countHolder.addUpdate("--- Single-Threaded Counting ---");
         Thread singleThread = new Thread(() -> {
             for (File file : allFiles) {
                 if (file.getName().toLowerCase().endsWith(".pdf")) {
@@ -53,12 +59,12 @@ public class PDFFileCounter {
         }
 
         System.out.println("\nCounting with four threads...");
-        coordinator.addUpdate("Starting four-threaded count...");
+        countHolder.addUpdate("Starting four-threaded count...");
         ExecutorService fourThreadExecutor = Executors.newFixedThreadPool(4);
-        int chunkSize = allFiles.size() / 4;
+        int workload = allFiles.size() / 4;
         for (int i = 0; i < 4; i++) {
-            final int start = i * chunkSize;
-            final int end = (i == 3) ? allFiles.size() : start + chunkSize;
+            final int start = i * workload;
+            final int end = (i == 3) ? allFiles.size() : start + workload;
             fourThreadExecutor.execute(() -> {
                 for (int j = start; j < end; j++) {
                     if (allFiles.get(j).getName().toLowerCase().endsWith(".pdf")) {
@@ -76,7 +82,7 @@ public class PDFFileCounter {
         fourThreadsCount.sendFinalCount("four threads");
 
         System.out.println("\nCounting with thread pool...");
-        coordinator.addUpdate("Starting thread pool count...");
+        countHolder.addUpdate("Starting thread pool count...");
         int poolSize = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
         ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
 
@@ -95,7 +101,7 @@ public class PDFFileCounter {
         }
         threadPoolCount.sendFinalCount("thread pool");
 
-        coordinator.addUpdate("Final Results");
+        countHolder.addUpdate("Final Results");
         try {
             resultPrinterThread.join();
         } catch (InterruptedException e) {

@@ -5,6 +5,10 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/*
+    Names: Mohammed Halkawt Ali, Kamiran Sulaiman Ilyas
+    Emails: mh21096@auis.edu.krd, ks20096@auis.edu.krd
+ */
 
 public class PDFFileCounter {
     public static void main(String[] args) {
@@ -20,6 +24,8 @@ public class PDFFileCounter {
         }
 
         List<File> allFiles = DirectoryScanner.getAllFiles(directory);
+        //Note: Here we scanned all files in the beginning and added them to this List to increase efficiency,
+        //  since if the threads themselves were to scan the directory everytime they wanted to count, it would be very inefficient.
         System.out.println("Total files found: " + allFiles.size());
 
         Counter singleThreadCount = new Counter();
