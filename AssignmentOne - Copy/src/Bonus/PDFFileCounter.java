@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /*
  * Names: Your Name 1, Your Name 2
@@ -129,7 +130,7 @@ public class PDFFileCounter {
         return updateMessages.remove(0);
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         PDFFileCounter coordinator = new PDFFileCounter();
 
         System.out.println("Enter the path to an existing directory:");
@@ -155,15 +156,22 @@ public class PDFFileCounter {
                 coordinator, singleThreadCount, fourThreadsCount, threadPoolCount));
         resultPrinterThread.start();
 
+        long startTime;
+        long endTime;
+
         System.out.println("\nCounting with single thread...");
+        startTime = System.currentTimeMillis();
         coordinator.addUpdate("--- Single-Threaded Counting ---");
         Thread singleThread = new Thread(() -> {
+            long threadStartTime = System.currentTimeMillis();
             for (File file : allFiles) {
                 if (file.getName().toLowerCase().endsWith(".pdf")) {
                     singleThreadCount.increment(Thread.currentThread().getName(), "Single thread");
                 }
             }
             singleThreadCount.sendFinalCount("single thread");
+            long threadEndTime = System.currentTimeMillis();
+            System.out.println("Single thread processing took: " + (threadEndTime - threadStartTime) + " ms");
         });
         singleThread.start();
         try {
@@ -171,49 +179,70 @@ public class PDFFileCounter {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        endTime = System.currentTimeMillis();
+        System.out.println("Time spent managing single thread: " + (endTime - startTime) + " ms");
+        System.out.println();
 
         System.out.println("\nCounting with four threads...");
+        startTime = System.currentTimeMillis();
         coordinator.addUpdate("Starting four-threaded count...");
         ExecutorService fourThreadExecutor = Executors.newFixedThreadPool(4);
         int chunkSize = allFiles.size() / 4;
+        List<Runnable> fourThreadTasks = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             final int start = i * chunkSize;
             final int end = (i == 3) ? allFiles.size() : start + chunkSize;
-            fourThreadExecutor.execute(() -> {
+            fourThreadTasks.add(() -> {
+                long threadStartTime = System.currentTimeMillis();
                 for (int j = start; j < end; j++) {
                     if (allFiles.get(j).getName().toLowerCase().endsWith(".pdf")) {
                         fourThreadsCount.increment(Thread.currentThread().getName(), "Four threads");
                     }
                 }
+                long threadEndTime = System.currentTimeMillis();
+                System.out.println("Thread " + Thread.currentThread().getName() + " processing took: " + (threadEndTime - threadStartTime) + " ms");
             });
         }
+        fourThreadTasks.forEach(fourThreadExecutor::execute);
         fourThreadExecutor.shutdown();
         try {
-            fourThreadExecutor.awaitTermination(Long.MAX_VALUE, java.util.concurrent.TimeUnit.NANOSECONDS);
+            fourThreadExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
         fourThreadsCount.sendFinalCount("four threads");
+        endTime = System.currentTimeMillis();
+        System.out.println("Time spent managing four threads: " + (endTime - startTime) + " ms");
+        System.out.println();
 
         System.out.println("\nCounting with thread pool...");
+        startTime = System.currentTimeMillis();
         coordinator.addUpdate("Starting thread pool count...");
         int poolSize = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
         ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
-
+        
+        List<Runnable> threadPoolTasks = new ArrayList<>();
         for (File file : allFiles) {
-            threadPool.execute(() -> {
+            threadPoolTasks.add(() -> {
+                long threadStartTime = System.currentTimeMillis();
                 if (file.getName().toLowerCase().endsWith(".pdf")) {
                     threadPoolCount.increment(Thread.currentThread().getName(), "Thread pool");
                 }
+                long threadEndTime = System.currentTimeMillis();
+                System.out.println("Thread " + Thread.currentThread().getName() + " processing took: " + (threadEndTime - threadStartTime) + " ms");
             });
         }
+        threadPoolTasks.forEach(threadPool::execute);
         threadPool.shutdown();
         try {
-            threadPool.awaitTermination(Long.MAX_VALUE, java.util.concurrent.TimeUnit.NANOSECONDS);
+            threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
         threadPoolCount.sendFinalCount("thread pool");
+        endTime = System.currentTimeMillis();
+        System.out.println("Time spent managing thread pool: " + (endTime - startTime) + " ms");
+        System.out.println();
 
         coordinator.addUpdate("Final Results");
         try {

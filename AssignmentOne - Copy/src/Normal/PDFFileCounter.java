@@ -102,17 +102,10 @@ public class PDFFileCounter {
 
         System.out.println("\nCounting with four threads...");
         ExecutorService fourThreadExecutor = Executors.newFixedThreadPool(4);
-        int filesPerThread = allFiles.size() / 4;
-        int remainingFiles = allFiles.size() % 4;
-        int currentIndex = 0;
-
+        int chunkSize = allFiles.size() / 4;
         for (int i = 0; i < 4; i++) {
-            int numFilesToProcess = filesPerThread;
-            if (i < remainingFiles) {
-                numFilesToProcess++;
-            }
-            final int start = currentIndex;
-            final int end = currentIndex + numFilesToProcess;
+            final int start = i * chunkSize;
+            final int end = (i == 3) ? allFiles.size() : start + chunkSize;
             fourThreadExecutor.execute(() -> {
                 for (int j = start; j < end; j++) {
                     if (allFiles.get(j).getName().toLowerCase().endsWith(".pdf")) {
@@ -120,7 +113,6 @@ public class PDFFileCounter {
                     }
                 }
             });
-            currentIndex = end;
         }
         fourThreadExecutor.shutdown();
         while (!fourThreadExecutor.isTerminated()) {
