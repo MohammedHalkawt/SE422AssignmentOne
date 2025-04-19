@@ -124,7 +124,6 @@ public class PDFFileCounter {
         }
         fourThreadExecutor.shutdown();
         while (!fourThreadExecutor.isTerminated()) {
-            // Wait for completion
         }
 
         System.out.println("\nCounting with thread pool...");
@@ -139,10 +138,8 @@ public class PDFFileCounter {
         }
         threadPool.shutdown();
         while (!threadPool.isTerminated()) {
-            // Wait for completion
         }
 
-        // Create and start a new thread for printing after all counting is done
         Thread resultPrinterThread = new Thread(new ResultPrinter(
                 singleThreadCount, fourThreadsCount, threadPoolCount));
         resultPrinterThread.start();

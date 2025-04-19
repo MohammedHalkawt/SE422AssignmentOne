@@ -75,8 +75,8 @@ class ResultPrinter implements Runnable {
     public void run() {
         System.out.println("--- Live Counting Updates ---");
         try {
-            // Single-threaded updates
-            System.out.println(coordinator.getNextUpdate()); // "--- Single-Threaded Counting ---"
+
+            System.out.println(coordinator.getNextUpdate());
             String message;
             while (!(message = coordinator.getNextUpdate()).startsWith("Final single thread count")) {
                 System.out.println(message);
@@ -84,8 +84,8 @@ class ResultPrinter implements Runnable {
             System.out.println(message);
             System.out.println();
 
-            // Four-threaded updates
-            System.out.println(coordinator.getNextUpdate()); // "Starting four-threaded count..."
+
+            System.out.println(coordinator.getNextUpdate());
             System.out.println("\n--- Four-Threaded Counting ---");
             while (!(message = coordinator.getNextUpdate()).startsWith("Final four threads count")) {
                 System.out.println(message);
@@ -93,8 +93,8 @@ class ResultPrinter implements Runnable {
             System.out.println(message);
             System.out.println();
 
-            // Thread pool updates
-            System.out.println(coordinator.getNextUpdate()); // "Starting thread pool count..."
+        
+            System.out.println(coordinator.getNextUpdate());
             System.out.println("\n--- Thread Pool Counting ---");
             while (!(message = coordinator.getNextUpdate()).startsWith("Final thread pool count")) {
                 System.out.println(message);
@@ -102,7 +102,7 @@ class ResultPrinter implements Runnable {
             System.out.println(message);
             System.out.println();
 
-            System.out.println(coordinator.getNextUpdate()); // "Final Results"
+            System.out.println(coordinator.getNextUpdate());
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
