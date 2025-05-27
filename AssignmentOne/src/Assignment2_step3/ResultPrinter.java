@@ -1,8 +1,9 @@
+package Assignment2_Step3;
 public class ResultPrinter implements Runnable {
     private final VolatileCounter singleThreadCount;
     private final VolatileCounter fourThreadsCount;
     private final VolatileCounter threadPoolCount;
-    private final Object lock;  // Shared lock for wait/notify
+    private final Object lock;
 
     public ResultPrinter(VolatileCounter single, VolatileCounter four, VolatileCounter pool, Object lock) {
         this.singleThreadCount = single;
@@ -15,7 +16,7 @@ public class ResultPrinter implements Runnable {
     public void run() {
         synchronized (lock) {
             try {
-                lock.wait();  // Wait until notified by the main thread
+                lock.wait();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

@@ -1,3 +1,4 @@
+package Assignment2_Step3;
 public class VolatileCounter {
     private volatile int count = 0;  // No need for synchronized methods
 

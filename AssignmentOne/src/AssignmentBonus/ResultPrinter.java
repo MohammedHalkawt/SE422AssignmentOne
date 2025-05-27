@@ -1,3 +1,5 @@
+package AssignmentBonus;
+
 import java.util.concurrent.SynchronousQueue;
 
 public class ResultPrinter implements Runnable {

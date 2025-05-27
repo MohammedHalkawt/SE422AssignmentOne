@@ -1,3 +1,4 @@
+package Assignment2_Step3;
 import java.io.File;
 import java.util.List;
 import java.util.Scanner;
@@ -21,20 +22,16 @@ public class PDFFileCounter {
         List<File> allFiles = DirectoryScanner.getAllFiles(directory);
         System.out.println("Total files found: " + allFiles.size());
 
-        // Shared lock for wait/notify
         Object lock = new Object();
 
-        // Initialize counters
         VolatileCounter singleThreadCount = new VolatileCounter();
         VolatileCounter fourThreadsCount = new VolatileCounter();
         VolatileCounter threadPoolCount = new VolatileCounter();
 
-        // Start printer thread early (it will wait)
         Thread resultPrinterThread = new Thread(new ResultPrinter(
             singleThreadCount, fourThreadsCount, threadPoolCount, lock));
         resultPrinterThread.start();
 
-        // 1. Single-threaded count
         System.out.println("\nCounting with single thread...");
         Thread singleThread = new Thread(() -> {
             for (File file : allFiles) {
@@ -50,7 +47,6 @@ public class PDFFileCounter {
             Thread.currentThread().interrupt();
         }
 
-        // 2. Four-threaded count (unchanged)
         System.out.println("\nCounting with four threads...");
         ExecutorService fourThreadExecutor = Executors.newFixedThreadPool(4);
         int filesPerThread = allFiles.size() / 4;
@@ -73,16 +69,15 @@ public class PDFFileCounter {
         fourThreadExecutor.shutdown();
         while (!fourThreadExecutor.isTerminated()) {}
 
-        // 3. Thread pool with CountDownLatch
         System.out.println("\nCounting with thread pool (volatile + latch)...");
         int poolSize = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
         ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
-        CountDownLatch startLatch = new CountDownLatch(1);  // Ensure all threads start together
+        CountDownLatch startLatch = new CountDownLatch(1);
 
         for (File file : allFiles) {
             threadPool.execute(() -> {
                 try {
-                    startLatch.await();  // Wait for the signal
+                    startLatch.await();
                     if (file.getName().toLowerCase().endsWith(".pdf")) {
                         threadPoolCount.increment();
                     }
@@ -92,18 +87,16 @@ public class PDFFileCounter {
             });
         }
 
-        // Release all threads
         startLatch.countDown();
         threadPool.shutdown();
         while (!threadPool.isTerminated()) {}
 
-        // Notify printer thread to print results
         synchronized (lock) {
             lock.notify();
         }
 
         try {
-            resultPrinterThread.join();  // Wait for printer thread to finish
+            resultPrinterThread.join();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

@@ -1,3 +1,5 @@
+package AssignmentBonus;
+
 import java.io.File;
 
 public final class ImmutableFileRecord {
