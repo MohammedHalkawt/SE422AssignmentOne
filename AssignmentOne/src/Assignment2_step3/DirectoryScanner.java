@@ -1,6 +1,8 @@
 package Assignment2_Step3;
+
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DirectoryScanner {
     public static List<File> getAllFiles(File directory) {
@@ -8,6 +10,7 @@ public class DirectoryScanner {
         scanDirectory(directory, fileList);
         return fileList;
     }
+
     private static void scanDirectory(File directory, List<File> fileList) {
         File[] files = directory.listFiles();
         if (files != null) {

@@ -1,12 +1,16 @@
 package Assignment2_Step3;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class VolatileCounter {
-    private volatile int count = 0;  // No need for synchronized methods
+
+    private final AtomicInteger count = new AtomicInteger(0);
 
     public void increment() {
-        count++; 
+        count.incrementAndGet();
     }
 
     public int getCount() {
-        return count;
+        return count.get();
     }
 }

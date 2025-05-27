@@ -1,5 +1,4 @@
 package AssignmentBonus;
-
 import java.io.File;
 import java.util.List;
 import java.util.Scanner;
@@ -10,7 +9,7 @@ public class LockFreePDFCounter {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter directory path:");
         File directory = new File(scanner.nextLine().trim());
-        
+
         if (!directory.exists() || !directory.isDirectory()) {
             System.err.println("Invalid directory path");
             scanner.close();
@@ -21,30 +20,34 @@ public class LockFreePDFCounter {
         System.out.println("Files found: " + files.size());
         scanner.close();
 
-        // Lock-free components
         LockFreeCounter counter = new LockFreeCounter();
+
+        SynchronousQueue<Long> resultQueue = new SynchronousQueue<>();
+        Thread resultPrinterThread = new Thread(new ResultPrinter(resultQueue));
+        resultPrinterThread.start();
+
+        System.out.println("\nCounting with 4 threads");
         ExecutorService executor = Executors.newFixedThreadPool(4);
-        CompletionService<Void> completionService = new ExecutorCompletionService<>(executor);
-        
-        // Process files
+
         for (File file : files) {
-            completionService.submit(() -> {
-                counter.process(new ImmutableFileRecord(file));
-                return null;
+            executor.execute(() -> {
+                ImmutableFileRecord record = new ImmutableFileRecord(file);
+                counter.process(record);
             });
         }
 
-        // Shutdown
         executor.shutdown();
+
         try {
-            for (int i = 0; i < files.size(); i++) {
-                completionService.take();
-            }
-            System.out.println("\n--- Lock-Free Results ---");
-            System.out.println("PDF files counted: " + counter.getCount());
+            executor.awaitTermination(1, TimeUnit.MINUTES);
+            resultQueue.put(counter.getCount());
+            resultPrinterThread.join();
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.err.println("Processing interrupted");
+            System.err.println("Processing interrupted: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("An error occurred during processing: " + e.getMessage());
         }
     }
 }

@@ -1,8 +1,9 @@
 References:
 
     We used AI bots like ChatGPT 4o, Gemini, and Deepseek for our assignment and asked questions such as:
-        - How to scan a directory for pdf files and count them in java
-        - Thread terminarion in java for ExecutorService
-        - How to equally divide workload between 4 threats in newFixedThreadPool
+        - Immutable Examples in java
+        - Atomic Integer and CAS operations explanations and code examples
+        - Volatile code examples and explanation
+        - How to use LongAdder in java
         
     https://docs.oracle.com/javase/8/docs/api/java/io/File.html

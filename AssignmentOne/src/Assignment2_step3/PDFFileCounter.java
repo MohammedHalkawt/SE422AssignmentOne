@@ -1,10 +1,9 @@
 package Assignment2_Step3;
+
 import java.io.File;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class PDFFileCounter {
     public static void main(String[] args) {
@@ -23,53 +22,12 @@ public class PDFFileCounter {
         System.out.println("Total files found: " + allFiles.size());
 
         Object lock = new Object();
-
-        VolatileCounter singleThreadCount = new VolatileCounter();
-        VolatileCounter fourThreadsCount = new VolatileCounter();
         VolatileCounter threadPoolCount = new VolatileCounter();
 
-        Thread resultPrinterThread = new Thread(new ResultPrinter(
-            singleThreadCount, fourThreadsCount, threadPoolCount, lock));
+        Thread resultPrinterThread = new Thread(new ResultPrinter(threadPoolCount, lock));
         resultPrinterThread.start();
 
-        System.out.println("\nCounting with single thread...");
-        Thread singleThread = new Thread(() -> {
-            for (File file : allFiles) {
-                if (file.getName().toLowerCase().endsWith(".pdf")) {
-                    singleThreadCount.increment();
-                }
-            }
-        });
-        singleThread.start();
-        try {
-            singleThread.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        System.out.println("\nCounting with four threads...");
-        ExecutorService fourThreadExecutor = Executors.newFixedThreadPool(4);
-        int filesPerThread = allFiles.size() / 4;
-        int remainingFiles = allFiles.size() % 4;
-        int currentIndex = 0;
-
-        for (int i = 0; i < 4; i++) {
-            int numFilesToProcess = filesPerThread + (i < remainingFiles ? 1 : 0);
-            final int start = currentIndex;
-            final int end = currentIndex + numFilesToProcess;
-            fourThreadExecutor.execute(() -> {
-                for (int j = start; j < end; j++) {
-                    if (allFiles.get(j).getName().toLowerCase().endsWith(".pdf")) {
-                        fourThreadsCount.increment();
-                    }
-                }
-            });
-            currentIndex = end;
-        }
-        fourThreadExecutor.shutdown();
-        while (!fourThreadExecutor.isTerminated()) {}
-
-        System.out.println("\nCounting with thread pool (volatile + latch)...");
+        System.out.println("\nCounting with thread pool");
         int poolSize = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
         ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
         CountDownLatch startLatch = new CountDownLatch(1);
@@ -89,7 +47,12 @@ public class PDFFileCounter {
 
         startLatch.countDown();
         threadPool.shutdown();
-        while (!threadPool.isTerminated()) {}
+        try {
+            threadPool.awaitTermination(1, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("Thread pool processing interrupted");
+        }
 
         synchronized (lock) {
             lock.notify();

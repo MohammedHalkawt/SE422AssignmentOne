@@ -30,7 +30,7 @@ public class PDFFileCounter {
 
         new Thread(new ResultPrinter(resultQueue)).start();
 
-
+        System.out.println("\nCounting with 4 threads");
         ExecutorService executor = Executors.newFixedThreadPool(4);
         for (File file : allFiles) {
             executor.execute(() -> {

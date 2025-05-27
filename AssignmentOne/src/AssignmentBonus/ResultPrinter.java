@@ -4,11 +4,11 @@ import java.util.concurrent.SynchronousQueue;
 
 public class ResultPrinter implements Runnable {
     private final SynchronousQueue<Long> resultQueue;
-    
+
     public ResultPrinter(SynchronousQueue<Long> queue) {
         this.resultQueue = queue;
     }
-    
+
     @Override
     public void run() {
         try {
